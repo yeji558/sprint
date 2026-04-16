@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>스프린트 주자·응원단 🏃</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#e8312a;--red-bg:#fff5f5;--red-border:#fecaca;
+  --blue:#2563eb;--blue-bg:#eff6ff;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-border:#bbf7d0;
+  --amber:#d97706;--amber-bg:#fffbeb;
+  --purple:#7c3aed;--pink:#db2777;
+  --g0:#ffffff;--g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;
+  --g300:#d1d5db;--g400:#9ca3af;--g500:#6b7280;--g600:#4b5563;
+  --g700:#374151;--g800:#1f2937;--g900:#111827;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Pretendard','Noto Sans KR',sans-serif;
+  --radius:12px;
+}
+body{background:#fff;color:var(--g800);font-family:var(--sans);overflow-x:hidden}
+
+/* HEADER */
+.hdr{background:#fff;border-bottom:1px solid var(--g200);padding:10px 14px;position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.hdr-badge{background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0}
+.hdr-title{font-size:14px;font-weight:800;color:var(--g900);flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.hdr-sub{font-size:10px;color:var(--g400);margin-left:auto;flex-shrink:0;white-space:nowrap}
+
+/* TABS */
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--g100);position:sticky;top:49px;z-index:100}
+.tab{flex:1;padding:9px 1px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--g400);font-family:var(--sans);font-size:10px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.tab.active{color:var(--red);border-bottom-color:var(--red)}
+
+/* CONTENT */
+.content{max-width:520px;margin:0 auto;padding:14px 14px 90px}
+.content:has(#p-course.active){padding:0}
+.pane{display:none}.pane.active{display:block;animation:up .2s ease}
+#p-course.active{animation:none}
+@keyframes up{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* SECTION LABEL */
+.slabel{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--g400);margin:16px 0 8px}
+.slabel:first-child{margin-top:0}
+
+/* ── 응원 지점 탭 ── */
+.spot-bar{background:var(--g50);border:1px solid var(--g200);border-radius:var(--radius);padding:12px;margin-bottom:14px}
+.spot-bar-label{font-size:11px;font-weight:600;color:var(--g500);margin-bottom:8px}
+.spot-chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:#fff;border:1.5px solid var(--g200);border-radius:20px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--g600);cursor:pointer;transition:all .15s;font-family:var(--sans)}
+.chip:hover{border-color:var(--red);color:var(--red)}
+.chip.active{background:var(--red);border-color:var(--red);color:#fff}
+.chip .ksub{font-size:10px;opacity:.7;margin-left:2px}
+.range-row{margin-top:8px;display:none}
+.range-row input{width:100%;accent-color:var(--red)}
+.range-lbl{font-size:11px;color:var(--g500);text-align:center;margin-top:3px}
+
+/* 타임슬롯 */
+.slot{border:1.5px solid var(--g200);border-radius:var(--radius);overflow:hidden;margin-bottom:8px}
+.slot-hdr{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--g50);border-bottom:1px solid var(--g200)}
+.slot-clock{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--g900)}
+.slot-range{font-size:10px;color:var(--g400);margin-top:1px}
+.slot-cnt{margin-left:auto;background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}
+.rrow{display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid var(--g100)}
+.rrow:last-child{border-bottom:none}
+.rdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.rinfo{flex:1;min-width:0}
+.rname{font-size:14px;font-weight:700;color:var(--g900)}
+.rmeta{font-size:10px;color:var(--g400);margin-top:1px}
+.rarrival{text-align:right;flex-shrink:0}
+.rtime{font-family:var(--mono);font-size:17px;font-weight:700}
+.relapsed{font-size:10px;color:var(--g400);margin-top:1px}
+
+.share-btn{width:100%;padding:13px;background:var(--red);border:none;border-radius:var(--radius);color:#fff;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;transition:background .2s}
+.share-btn:hover{background:#c0201a}
+.share-ok{margin-top:8px;padding:9px 12px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:10px;font-size:12px;color:var(--green);text-align:center;display:none}
+
+/* ── 주자 탭 ── */
+.rcard{background:#fff;border:1.5px solid var(--g200);border-radius:var(--radius);overflow:hidden;margin-bottom:8px;position:relative}
+.rcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--rc,var(--red))}
+.rcard-hdr{display:flex;align-items:center;gap:8px;padding:10px 12px 8px 16px}
+.rcard-emoji{font-size:18px}
+.rcard-name{font-size:14px;font-weight:800;color:var(--g900)}
+.rcard-sub{font-size:10px;color:var(--g400);margin-top:1px}
+.rcard-pace{margin-left:auto;background:var(--g100);border-radius:7px;padding:3px 8px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--g700);white-space:nowrap}
+.splits-wrap{display:flex;flex-direction:column;gap:3px;padding:0 12px 8px 16px}
+.splits-row{display:flex;gap:4px}
+.sc{flex:1;background:var(--g50);border-radius:7px;padding:4px 3px;text-align:center}
+.sc-km{font-size:9px;color:var(--g400);margin-bottom:1px}
+.sc-time{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--g800)}
+.rcard-cheer{display:flex;align-items:center;gap:7px;margin:0 12px 8px 16px;padding:7px 10px;border-radius:8px;background:var(--red-bg);border:1px solid var(--red-border)}
+.rcard-cheer-lbl{flex:1;font-size:11px;color:var(--g600)}
+.rcard-cheer-time{font-family:var(--mono);font-size:15px;font-weight:700}
+.rcard-acts{display:flex;border-top:1px solid var(--g100)}
+.ract{flex:1;padding:8px;background:none;border:none;font-family:var(--sans);font-size:11px;color:var(--g500);cursor:pointer;transition:all .15s}
+.ract:hover{background:var(--g50);color:var(--g800)}
+.ract:first-child{border-right:1px solid var(--g100)}
+.ract.danger:hover{color:var(--red)}
+
+/* ── 추가 탭 ── */
+.add-form{background:var(--g50);border:1.5px solid var(--g200);border-radius:var(--radius);padding:14px}
+.frow{margin-bottom:11px}
+.flabel{font-size:11px;font-weight:600;color:var(--g500);margin-bottom:4px;display:block}
+.finput{width:100%;padding:9px 11px;background:#fff;border:1.5px solid var(--g200);border-radius:8px;color:var(--g900);font-family:var(--sans);font-size:14px;transition:border-color .15s}
+.finput:focus{outline:none;border-color:var(--red)}
+.tgl-grp{display:flex;background:#fff;border:1.5px solid var(--g200);border-radius:8px;overflow:hidden}
+.tgl{flex:1;padding:8px 4px;background:none;border:none;color:var(--g500);font-family:var(--sans);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center;border-right:1px solid var(--g200);line-height:1.2}
+.tgl:last-child{border-right:none}
+.tgl.active{background:var(--red);color:#fff}
+.tgl .sub{font-size:9px;display:block;margin-top:1px;opacity:.7}
+.tgl.active .sub{opacity:.8}
+.tp-row{display:flex;align-items:center;gap:3px;justify-content:center}
+.tpu{display:flex;flex-direction:column;align-items:center;gap:2px}
+.tpa{width:36px;height:24px;background:#fff;border:1.5px solid var(--g200);border-radius:6px;color:var(--g500);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.tpa:hover{border-color:var(--red);color:var(--red)}
+.tpd{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--g900);min-width:44px;text-align:center;line-height:1}
+.tpsep{font-size:20px;color:var(--g300);font-family:var(--mono);padding-bottom:14px}
+.tplbl{font-size:9px;color:var(--g400)}
+.pace-hint{text-align:center;margin-top:7px;font-size:11px;color:var(--g500)}
+.pace-hint strong{font-family:var(--mono);color:var(--red);font-size:13px}
+.cpick{display:flex;gap:6px;flex-wrap:wrap}
+.cdot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .15s;display:flex;align-items:center;justify-content:center;font-size:11px}
+.cdot.active{border-color:var(--g800);transform:scale(1.1)}
+.add-btn{width:100%;padding:12px;background:var(--red);border:none;border-radius:9px;color:#fff;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;margin-top:4px;transition:background .2s}
+.add-btn:hover{background:#c0201a}
+
+/* ── 라이브 탭 ── */
+/* 상단: 주자 이름 선택 버튼 */
+.live-selector{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.live-sel-btn{background:#fff;border:1.5px solid var(--g200);border-radius:20px;padding:5px 12px;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--g600);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px}
+.live-sel-btn .dot{width:8px;height:8px;border-radius:50%}
+.live-sel-btn.active{border-width:2px}
+
+/* 두 가지 뷰: 개인 뷰 / 전체 현황 */
+.live-tabs{display:flex;gap:6px;margin-bottom:12px}
+.live-tab{flex:1;padding:8px;background:var(--g50);border:1.5px solid var(--g200);border-radius:8px;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--g500);cursor:pointer;text-align:center;transition:all .15s}
+.live-tab.active{background:var(--red);border-color:var(--red);color:#fff}
+
+/* 개인 뷰 */
+.live-person{background:#fff;border:1.5px solid var(--g200);border-radius:var(--radius);overflow:hidden;margin-bottom:10px}
+.live-phdr{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--g50);border-bottom:1px solid var(--g200)}
+.live-pdot{width:10px;height:10px;border-radius:50%}
+.live-pname{font-size:14px;font-weight:700}
+.live-pmeta{margin-left:auto;font-size:11px;color:var(--g400)}
+.lsplit{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--g100)}
+.lsplit:last-of-type{border-bottom:none}
+.lsplit-emoji{font-size:14px;width:20px;text-align:center;flex-shrink:0}
+.lsplit-info{flex:1}
+.lsplit-name{font-size:12px;font-weight:600;color:var(--g800)}
+.lsplit-exp{font-size:10px;color:var(--g400);margin-top:1px}
+.lsplit-input{background:var(--g50);border:1.5px solid var(--g200);border-radius:7px;color:var(--g900);font-family:var(--mono);font-size:12px;padding:6px 7px;width:82px;color-scheme:light;flex-shrink:0;transition:border-color .2s}
+.lsplit-input.filled{border-color:var(--green);background:var(--green-bg)}
+.proj-bar{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--green-bg);border-top:1px solid var(--green-border)}
+.proj-time{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--green)}
+.proj-diff{font-size:11px;font-weight:600;margin-top:2px}
+.proj-diff.fast{color:var(--green)}.proj-diff.slow{color:var(--amber)}
+
+/* 전체 현황 — 구간 × 주자 매트릭스 */
+.matrix-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -14px;padding:0 14px}
+.matrix{border-collapse:collapse;font-size:11px;white-space:nowrap;width:100%}
+.matrix th{background:var(--g50);border:1px solid var(--g200);padding:6px 8px;font-weight:700;color:var(--g600);text-align:center;position:sticky;top:0}
+.matrix th.name-col{position:sticky;left:0;z-index:2;background:var(--g100);text-align:left;min-width:70px}
+.matrix td{border:1px solid var(--g100);padding:6px 8px;text-align:center;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--g700);background:#fff}
+.matrix td.name-cell{position:sticky;left:0;z-index:1;background:#fff;font-family:var(--sans);font-weight:700;font-size:12px;color:var(--g900);text-align:left;padding-left:10px}
+.matrix td.name-cell .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px}
+.matrix td.live-cell{background:#f0fdf4;color:var(--green)}
+.matrix tr:hover td{background:var(--g50)}
+.matrix tr:hover td.name-cell{background:var(--g50)}
+
+/* 코스 지도 — 풀스크린 오버레이 */
+#p-course{position:relative;padding:0!important;overflow:hidden}
+.map-outer{position:relative;width:100%}
+#course-map{height:calc(100dvh - 98px);min-height:400px;width:100%}
+.map-overlay-top{position:absolute;top:8px;left:8px;right:8px;z-index:500;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.map-overlay-top>*{pointer-events:auto}
+.map-spot-row{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+.map-spot-row::-webkit-scrollbar{display:none}
+.map-chip{background:rgba(255,255,255,.93);border:2px solid transparent;border-radius:20px;padding:5px 11px;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--g700);cursor:pointer;white-space:nowrap;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 1px 5px rgba(0,0,0,.18);transition:all .15s;flex-shrink:0}
+.map-chip.active{color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.map-chip:hover:not(.active){border-color:var(--red);color:var(--red)}
+.map-action-row{display:flex;gap:6px}
+.map-btn{flex:1;padding:9px 8px;border:none;border-radius:9px;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:all .15s;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.map-btn-primary{background:rgba(232,49,42,.93);color:#fff}
+.map-btn-primary:active{background:rgba(192,32,26,.97)}
+.map-btn-reset{background:rgba(255,255,255,.93);color:var(--g700);flex:0 0 44px;font-size:16px;padding:9px 0}
+.map-legend{position:absolute;bottom:8px;left:8px;z-index:500;display:flex;flex-wrap:wrap;gap:5px;background:rgba(255,255,255,.88);backdrop-filter:blur(4px);border-radius:8px;padding:6px 8px}
+.leg{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--g600)}
+.legline{width:12px;height:3px;border-radius:2px}
+.legdot{width:6px;height:6px;border-radius:50%}
+.map-toast{position:absolute;bottom:46px;left:50%;transform:translateX(-50%);z-index:600;background:rgba(22,163,74,.93);color:#fff;font-family:var(--sans);font-size:12px;font-weight:700;padding:7px 14px;border-radius:20px;white-space:nowrap;backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,.2);opacity:0;transition:opacity .3s;pointer-events:none}
+.map-toast.show{opacity:1}
+
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--g200);border-radius:2px}
+
+/* ── 타임라인 탭 ── */
+.tl-section{margin-bottom:20px}
+.tl-group-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:8px}
+.tl-group-title{font-size:14px;font-weight:800;color:#fff}
+.tl-group-sub{font-size:11px;color:rgba(255,255,255,0.8);margin-left:auto}
+.tl-item{display:flex;gap:0;margin-bottom:0;position:relative}
+.tl-line-col{display:flex;flex-direction:column;align-items:center;width:36px;flex-shrink:0}
+.tl-dot{width:12px;height:12px;border-radius:50%;border:2.5px solid #fff;flex-shrink:0;margin-top:4px;z-index:1}
+.tl-vline{width:2px;flex:1;min-height:16px}
+.tl-body{flex:1;padding:0 0 14px 4px}
+.tl-time{font-family:var(--mono);font-size:16px;font-weight:700;line-height:1}
+.tl-place{font-size:13px;font-weight:700;color:var(--g900);margin-top:2px}
+.tl-detail{font-size:11px;color:var(--g500);margin-top:3px;line-height:1.6}
+.tl-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:4px}
+.tl-finish{background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:14px;padding:14px;margin-top:16px;text-align:center}
+.tl-finish-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:4px}
+.tl-finish-time{font-family:var(--mono);font-size:28px;font-weight:800;color:#fff}
+.tl-finish-sub{font-size:11px;color:rgba(255,255,255,0.85);margin-top:3px}
+.tl-notice{background:var(--amber-bg);border:1px solid #fde68a;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--g700);line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <span class="hdr-badge">2026 서하마</span>
+  <span class="hdr-title">스프린트 주자·응원단 🏃</span>
+  <span class="hdr-sub">4.26(일) · 광화문→상암</span>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-pane="p-course">🗺 코스</button>
+  <button class="tab" data-pane="p-timeline">👥 응원단</button>
+  <button class="tab" data-pane="p-cheer">📍 지점</button>
+  <button class="tab" data-pane="p-runners">🏃 주자</button>
+  <button class="tab" data-pane="p-add">➕ 추가</button>
+  <button class="tab" data-pane="p-live">⏱ 라이브</button>
+</div>
+
+<div class="content">
+
+<!-- ══ 응원 지점 탭 ══ -->
+<div id="p-cheer" class="pane">
+  <div class="spot-bar">
+    <div class="spot-bar-label">📍 내 응원 지점</div>
+    <div class="spot-chips" id="spot-chips"></div>
+    <div class="range-row" id="range-row">
+      <input type="range" min="0.5" max="21" step="0.5" id="spot-range" oninput="onRangeChange(this.value)"/>
+      <div class="range-lbl" id="range-lbl">10km</div>
+    </div>
+  </div>
+  <div class="slabel" id="cheer-title">📣 도착 예상 시각</div>
+  <div id="timeline"></div>
+  <button class="share-btn" onclick="shareCheer()">📋 응원 정보 공유</button>
+  <div class="share-ok" id="share-ok">✅ 복사됐어! 카톡으로 보내줘 🎉</div>
+</div>
+
+<!-- ══ 주자 탭 ══ -->
+<div id="p-runners" class="pane">
+  <div id="runner-list"></div>
+</div>
+
+<!-- ══ 추가 탭 ══ -->
+<div id="p-add" class="pane">
+  <div class="add-form">
+    <div class="frow">
+      <label class="flabel">이름 / 닉네임</label>
+      <input type="text" class="finput" id="f-name" placeholder="예: 김스프린트" maxlength="10"/>
+    </div>
+    <div class="frow">
+      <label class="flabel">코스</label>
+      <div class="tgl-grp" id="f-course">
+        <button class="tgl" onclick="fCourse('10k',this)">10K</button>
+        <button class="tgl active" onclick="fCourse('half',this)">하프</button>
+      </div>
+    </div>
+    <div class="frow">
+      <label class="flabel">그룹</label>
+      <div class="tgl-grp" id="f-group"></div>
+    </div>
+    <div class="frow">
+      <label class="flabel">목표 기록</label>
+      <div class="tp-row">
+        <div class="tpu">
+          <button class="tpa" onclick="fAdj('h',1)">▲</button>
+          <div class="tpd" id="f-h">01</div>
+          <button class="tpa" onclick="fAdj('h',-1)">▼</button>
+          <div class="tplbl">시간</div>
+        </div>
+        <div class="tpsep">:</div>
+        <div class="tpu">
+          <button class="tpa" onclick="fAdj('m',1)">▲</button>
+          <div class="tpd" id="f-m">45</div>
+          <button class="tpa" onclick="fAdj('m',-1)">▼</button>
+          <div class="tplbl">분</div>
+        </div>
+        <div class="tpsep">:</div>
+        <div class="tpu">
+          <button class="tpa" onclick="fAdj('s',1)">▲</button>
+          <div class="tpd" id="f-s">00</div>
+          <button class="tpa" onclick="fAdj('s',-1)">▼</button>
+          <div class="tplbl">초</div>
+        </div>
+      </div>
+      <div class="pace-hint">평균 <strong id="f-pace">—</strong>/km</div>
+    </div>
+    <div class="frow">
+      <label class="flabel">색상</label>
+      <div class="cpick" id="f-colors"></div>
+    </div>
+    <button class="add-btn" onclick="addRunner()">+ 주자 추가</button>
+  </div>
+</div>
+
+<!-- ══ 타임라인 탭 ══ -->
+<div id="p-timeline" class="pane">
+  <div id="timeline-content"></div>
+</div>
+
+<!-- ══ 라이브 탭 ══ -->
+<div id="p-live" class="pane">
+  <!-- 주자 선택 버튼 -->
+  <div class="live-selector" id="live-selector"></div>
+  <!-- 개인/전체 토글 -->
+  <div class="live-tabs">
+    <button class="live-tab active" id="lt-matrix" onclick="setLiveView('matrix')">전체 현황</button>
+    <button class="live-tab" id="lt-person" onclick="setLiveView('person')">개인 입력</button>
+  </div>
+  <!-- 개인 뷰 -->
+  <div id="live-person-view" style="display:none"></div>
+  <!-- 전체 현황 매트릭스 -->
+  <div id="live-matrix-view"></div>
+</div>
+
+<!-- ══ 코스 탭 ══ -->
+<div id="p-course" class="pane active">
+  <div class="map-outer">
+    <div id="course-map"></div>
+    <!-- 상단 오버레이: 응원지점 칩 + 버튼 -->
+    <div class="map-overlay-top">
+      <div class="map-spot-row" id="map-spot-chips"></div>
+      <div class="map-action-row">
+        <button class="map-btn map-btn-primary" onclick="clearRunnerMarkers()">✕ 마커 초기화</button>
+      </div>
+    </div>
+    <!-- 범례 -->
+    <div class="map-legend">
+      <div class="leg"><div class="legline" style="background:#e8312a"></div>하프 코스</div>
+      <div class="leg"><div class="legdot" style="background:#e8312a"></div>구간 마커</div>
+      <div class="leg"><div class="legdot" style="background:#111;opacity:.5"></div>내 응원 지점</div>
+    </div>
+    <!-- 토스트 메시지 -->
+    <div class="map-toast" id="map-toast"></div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<script>
+// ══ 데이터 ══
+const COORDS=[
+  [37.57495,126.97706],
+  [37.57489,126.97708],
+  [37.57468,126.97708],
+  [37.57441,126.97709],
+  [37.57387,126.97710],
+  [37.57354,126.97711],
+  [37.57333,126.97712],
+  [37.57279,126.97713],
+  [37.57259,126.97714],
+  [37.57226,126.97715],
+  [37.57172,126.97717],
+  [37.57169,126.97717],
+  [37.57141,126.97717],
+  [37.57118,126.97715],
+  [37.57064,126.97711],
+  [37.57049,126.97710],
+  [37.57041,126.97709],
+  [37.57035,126.97708],
+  [37.57028,126.97707],
+  [37.57024,126.97707],
+  [37.57020,126.97707],
+  [37.57014,126.97707],
+  [37.57010,126.97707],
+  [37.57005,126.97706],
+  [37.57000,126.97705],
+  [37.56963,126.97703],
+  [37.56956,126.97703],
+  [37.56929,126.97704],
+  [37.56905,126.97704],
+  [37.56875,126.97704],
+  [37.56841,126.97704],
+  [37.56821,126.97705],
+  [37.56768,126.97708],
+  [37.56735,126.97710],
+  [37.56714,126.97711],
+  [37.56687,126.97711],
+  [37.56664,126.97712],
+  [37.56660,126.97712],
+  [37.56606,126.97711],
+  [37.56552,126.97710],
+  [37.56524,126.97710],
+  [37.56492,126.97708],
+  [37.56475,126.97707],
+  [37.56471,126.97707],
+  [37.56464,126.97706],
+  [37.56446,126.97698],
+  [37.56400,126.97683],
+  [37.56396,126.97659],
+  [37.56391,126.97641],
+  [37.56386,126.97623],
+  [37.56380,126.97601],
+  [37.56374,126.97586],
+  [37.56371,126.97578],
+  [37.56367,126.97567],
+  [37.56353,126.97534],
+  [37.56346,126.97518],
+  [37.56335,126.97491],
+  [37.56332,126.97484],
+  [37.56322,126.97457],
+  [37.56307,126.97414],
+  [37.56305,126.97408],
+  [37.56294,126.97362],
+  [37.56285,126.97324],
+  [37.56282,126.97310],
+  [37.56279,126.97296],
+  [37.56271,126.97264],
+  [37.56268,126.97250],
+  [37.56265,126.97237],
+  [37.56249,126.97202],
+  [37.56248,126.97200],
+  [37.56237,126.97155],
+  [37.56233,126.97137],
+  [37.56217,126.97072],
+  [37.56199,126.96996],
+  [37.56195,126.96980],
+  [37.56191,126.96965],
+  [37.56186,126.96942],
+  [37.56172,126.96886],
+  [37.56171,126.96880],
+  [37.56170,126.96877],
+  [37.56157,126.96824],
+  [37.56154,126.96812],
+  [37.56144,126.96764],
+  [37.56142,126.96754],
+  [37.56139,126.96747],
+  [37.56124,126.96704],
+  [37.56110,126.96676],
+  [37.56098,126.96660],
+  [37.56076,126.96628],
+  [37.56066,126.96605],
+  [37.56058,126.96586],
+  [37.56042,126.96561],
+  [37.56035,126.96550],
+  [37.56030,126.96542],
+  [37.56018,126.96523],
+  [37.55985,126.96470],
+  [37.55960,126.96431],
+  [37.55952,126.96421],
+  [37.55950,126.96418],
+  [37.55936,126.96391],
+  [37.55920,126.96358],
+  [37.55915,126.96330],
+  [37.55913,126.96294],
+  [37.55912,126.96276],
+  [37.55906,126.96226],
+  [37.55905,126.96214],
+  [37.55899,126.96194],
+  [37.55897,126.96186],
+  [37.55883,126.96152],
+  [37.55851,126.96113],
+  [37.55813,126.96066],
+  [37.55774,126.96019],
+  [37.55755,126.95995],
+  [37.55717,126.95949],
+  [37.55719,126.95920],
+  [37.55695,126.95892],
+  [37.55656,126.95846],
+  [37.55629,126.95815],
+  [37.55601,126.95790],
+  [37.55567,126.95771],
+  [37.55529,126.95750],
+  [37.55517,126.95744],
+  [37.55467,126.95720],
+  [37.55417,126.95695],
+  [37.55366,126.95670],
+  [37.55341,126.95658],
+  [37.55319,126.95647],
+  [37.55291,126.95633],
+  [37.55241,126.95607],
+  [37.55216,126.95594],
+  [37.55169,126.95570],
+  [37.55166,126.95569],
+  [37.55141,126.95557],
+  [37.55090,126.95533],
+  [37.55089,126.95532],
+  [37.55041,126.95506],
+  [37.54991,126.95480],
+  [37.54941,126.95453],
+  [37.54892,126.95427],
+  [37.54858,126.95409],
+  [37.54842,126.95401],
+  [37.54817,126.95388],
+  [37.54785,126.95372],
+  [37.54765,126.95361],
+  [37.54719,126.95331],
+  [37.54698,126.95318],
+  [37.54675,126.95306],
+  [37.54670,126.95302],
+  [37.54641,126.95279],
+  [37.54624,126.95267],
+  [37.54583,126.95238],
+  [37.54577,126.95234],
+  [37.54530,126.95201],
+  [37.54528,126.95200],
+  [37.54498,126.95175],
+  [37.54487,126.95161],
+  [37.54482,126.95155],
+  [37.54441,126.95125],
+  [37.54431,126.95118],
+  [37.54393,126.95094],
+  [37.54389,126.95091],
+  [37.54377,126.95085],
+  [37.54346,126.95061],
+  [37.54300,126.95025],
+  [37.54249,126.94986],
+  [37.54238,126.94974],
+  [37.54215,126.94943],
+  [37.54197,126.94917],
+  [37.54161,126.94867],
+  [37.54132,126.94826],
+  [37.54124,126.94835],
+  [37.54122,126.94837],
+  [37.54103,126.94812],
+  [37.54087,126.94790],
+  [37.54069,126.94764],
+  [37.54034,126.94713],
+  [37.53998,126.94663],
+  [37.53962,126.94612],
+  [37.53944,126.94586],
+  [37.53923,126.94556],
+  [37.53908,126.94536],
+  [37.53871,126.94486],
+  [37.53854,126.94463],
+  [37.53835,126.94436],
+  [37.53819,126.94414],
+  [37.53793,126.94397],
+  [37.53794,126.94392],
+  [37.53780,126.94367],
+  [37.53765,126.94340],
+  [37.53748,126.94312],
+  [37.53739,126.94297],
+  [37.53731,126.94300],
+  [37.53729,126.94292],
+  [37.53722,126.94277],
+  [37.53716,126.94267],
+  [37.53684,126.94213],
+  [37.53667,126.94186],
+  [37.53652,126.94160],
+  [37.53642,126.94162],
+  [37.53635,126.94141],
+  [37.53630,126.94125],
+  [37.53605,126.94085],
+  [37.53572,126.94031],
+  [37.53538,126.93978],
+  [37.53505,126.93924],
+  [37.53488,126.93897],
+  [37.53455,126.93844],
+  [37.53422,126.93790],
+  [37.53388,126.93737],
+  [37.53355,126.93683],
+  [37.53322,126.93630],
+  [37.53289,126.93576],
+  [37.53272,126.93550],
+  [37.53239,126.93496],
+  [37.53222,126.93469],
+  [37.53189,126.93416],
+  [37.53155,126.93362],
+  [37.53122,126.93309],
+  [37.53089,126.93255],
+  [37.53063,126.93214],
+  [37.53055,126.93202],
+  [37.53039,126.93175],
+  [37.53007,126.93124],
+  [37.52987,126.93096],
+  [37.52976,126.93080],
+  [37.52954,126.93050],
+  [37.52951,126.93046],
+  [37.52945,126.93040],
+  [37.52938,126.93035],
+  [37.52936,126.93034],
+  [37.52925,126.93029],
+  [37.52928,126.93024],
+  [37.52929,126.93020],
+  [37.52929,126.93012],
+  [37.52917,126.92997],
+  [37.52920,126.92989],
+  [37.52925,126.92976],
+  [37.52925,126.92974],
+  [37.52915,126.92940],
+  [37.52910,126.92937],
+  [37.52898,126.92932],
+  [37.52896,126.92930],
+  [37.52876,126.92900],
+  [37.52841,126.92848],
+  [37.52807,126.92796],
+  [37.52805,126.92793],
+  [37.52789,126.92770],
+  [37.52754,126.92719],
+  [37.52747,126.92709],
+  [37.52720,126.92665],
+  [37.52689,126.92616],
+  [37.52677,126.92598],
+  [37.52670,126.92587],
+  [37.52653,126.92559],
+  [37.52620,126.92505],
+  [37.52587,126.92451],
+  [37.52575,126.92432],
+  [37.52554,126.92397],
+  [37.52521,126.92344],
+  [37.52488,126.92290],
+  [37.52455,126.92236],
+  [37.52449,126.92227],
+  [37.52437,126.92209],
+  [37.52428,126.92194],
+  [37.52421,126.92183],
+  [37.52411,126.92165],
+  [37.52388,126.92129],
+  [37.52354,126.92077],
+  [37.52320,126.92024],
+  [37.52286,126.91971],
+  [37.52257,126.91927],
+  [37.52236,126.91890],
+  [37.52221,126.91863],
+  [37.52189,126.91807],
+  [37.52188,126.91805],
+  [37.52177,126.91785],
+  [37.52166,126.91745],
+  [37.52209,126.91706],
+  [37.52210,126.91705],
+  [37.52254,126.91669],
+  [37.52321,126.91613],
+  [37.52338,126.91640],
+  [37.52371,126.91694],
+  [37.52403,126.91745],
+  [37.52404,126.91747],
+  [37.52439,126.91800],
+  [37.52456,126.91826],
+  [37.52491,126.91878],
+  [37.52523,126.91927],
+  [37.52525,126.91930],
+  [37.52558,126.91984],
+  [37.52592,126.92037],
+  [37.52625,126.92091],
+  [37.52658,126.92144],
+  [37.52692,126.92198],
+  [37.52725,126.92251],
+  [37.52758,126.92305],
+  [37.52792,126.92358],
+  [37.52825,126.92412],
+  [37.52891,126.92519],
+  [37.52908,126.92546],
+  [37.52941,126.92599],
+  [37.52975,126.92653],
+  [37.53016,126.92719],
+  [37.53032,126.92671],
+  [37.53053,126.92609],
+  [37.53074,126.92546],
+  [37.53085,126.92515],
+  [37.53106,126.92452],
+  [37.53127,126.92390],
+  [37.53148,126.92327],
+  [37.53177,126.92241],
+  [37.53187,126.92201],
+  [37.53204,126.92136],
+  [37.53221,126.92071],
+  [37.53229,126.92039],
+  [37.53246,126.91974],
+  [37.53254,126.91942],
+  [37.53271,126.91877],
+  [37.53281,126.91838],
+  [37.53287,126.91812],
+  [37.53295,126.91780],
+  [37.53311,126.91715],
+  [37.53326,126.91650],
+  [37.53342,126.91584],
+  [37.53352,126.91542],
+  [37.53357,126.91485],
+  [37.53362,126.91417],
+  [37.53365,126.91383],
+  [37.53371,126.91316],
+  [37.53377,126.91248],
+  [37.53381,126.91195],
+  [37.53359,126.91155],
+  [37.53329,126.91098],
+  [37.53298,126.91042],
+  [37.53283,126.91014],
+  [37.53253,126.90958],
+  [37.53238,126.90930],
+  [37.53207,126.90873],
+  [37.53185,126.90832],
+  [37.53222,126.90809],
+  [37.53270,126.90778],
+  [37.53318,126.90747],
+  [37.53366,126.90716],
+  [37.53390,126.90701],
+  [37.53462,126.90655],
+  [37.53474,126.90624],
+  [37.53498,126.90563],
+  [37.53510,126.90533],
+  [37.53534,126.90472],
+  [37.53558,126.90411],
+  [37.53570,126.90380],
+  [37.53597,126.90311],
+  [37.53627,126.90266],
+  [37.53644,126.90239],
+  [37.53678,126.90187],
+  [37.53695,126.90161],
+  [37.53729,126.90108],
+  [37.53763,126.90055],
+  [37.53781,126.90029],
+  [37.53810,126.89984],
+  [37.53839,126.90008],
+  [37.53884,126.90046],
+  [37.53929,126.90083],
+  [37.53974,126.90121],
+  [37.54019,126.90159],
+  [37.54064,126.90196],
+  [37.54086,126.90215],
+  [37.54131,126.90253],
+  [37.54153,126.90272],
+  [37.54198,126.90309],
+  [37.54243,126.90347],
+  [37.54266,126.90366],
+  [37.54311,126.90403],
+  [37.54345,126.90432],
+  [37.54373,126.90467],
+  [37.54412,126.90514],
+  [37.54451,126.90562],
+  [37.54470,126.90585],
+  [37.54509,126.90633],
+  [37.54548,126.90680],
+  [37.54586,126.90728],
+  [37.54625,126.90775],
+  [37.54644,126.90799],
+  [37.54678,126.90840],
+  [37.54683,126.90846],
+  [37.54699,126.90864],
+  [37.54722,126.90892],
+  [37.54742,126.90916],
+  [37.54751,126.90927],
+  [37.54761,126.90939],
+  [37.54777,126.90958],
+  [37.54798,126.90990],
+  [37.54817,126.91026],
+  [37.54823,126.91037],
+  [37.54827,126.91047],
+  [37.54832,126.91058],
+  [37.54846,126.91091],
+  [37.54856,126.91129],
+  [37.54859,126.91140],
+  [37.54865,126.91167],
+  [37.54868,126.91181],
+  [37.54873,126.91206],
+  [37.54874,126.91211],
+  [37.54879,126.91235],
+  [37.54890,126.91286],
+  [37.54905,126.91325],
+  [37.54907,126.91328],
+  [37.54924,126.91345],
+  [37.54954,126.91323],
+  [37.54956,126.91322],
+  [37.55009,126.91307],
+  [37.55042,126.91298],
+  [37.55061,126.91292],
+  [37.55113,126.91275],
+  [37.55166,126.91258],
+  [37.55218,126.91241],
+  [37.55244,126.91233],
+  [37.55296,126.91216],
+  [37.55323,126.91208],
+  [37.55375,126.91191],
+  [37.55427,126.91174],
+  [37.55449,126.91154],
+  [37.55493,126.91115],
+  [37.55537,126.91075],
+  [37.55559,126.91055],
+  [37.55602,126.91016],
+  [37.55646,126.90976],
+  [37.55668,126.90956],
+  [37.55712,126.90917],
+  [37.55756,126.90877],
+  [37.55778,126.90857],
+  [37.55822,126.90818],
+  [37.55866,126.90778],
+  [37.55910,126.90739],
+  [37.55932,126.90719],
+  [37.55976,126.90679],
+  [37.56019,126.90640],
+  [37.56041,126.90620],
+  [37.56085,126.90581],
+  [37.56129,126.90541],
+  [37.56151,126.90521],
+  [37.56195,126.90482],
+  [37.56239,126.90442],
+  [37.56261,126.90422],
+  [37.56305,126.90383],
+  [37.56308,126.90380],
+  [37.56355,126.90336],
+  [37.56359,126.90333],
+  [37.56363,126.90324],
+  [37.56374,126.90314],
+  [37.56382,126.90307],
+  [37.56389,126.90300],
+  [37.56410,126.90279],
+  [37.56416,126.90273],
+  [37.56442,126.90247],
+  [37.56453,126.90237],
+  [37.56474,126.90216],
+  [37.56491,126.90200],
+  [37.56525,126.90161],
+  [37.56534,126.90157],
+  [37.56545,126.90134],
+  [37.56550,126.90123],
+  [37.56571,126.90078],
+  [37.56576,126.90063],
+  [37.56579,126.90055],
+  [37.56587,126.90032],
+  [37.56595,126.90007],
+  [37.56608,126.89970],
+  [37.56627,126.89917],
+  [37.56628,126.89873],
+  [37.56628,126.89831],
+  [37.56628,126.89805],
+  [37.56629,126.89775],
+  [37.56629,126.89737],
+  [37.56629,126.89735],
+  [37.56630,126.89718],
+  [37.56631,126.89711],
+  [37.56634,126.89680],
+  [37.56635,126.89673],
+  [37.56643,126.89637],
+  [37.56648,126.89617],
+  [37.56662,126.89573],
+  [37.56673,126.89538],
+  [37.56684,126.89510],
+  [37.56695,126.89481],
+  [37.56718,126.89431],
+  [37.56741,126.89396],
+  [37.56758,126.89371],
+  [37.56777,126.89346],
+  [37.56806,126.89309],
+  [37.56815,126.89297],
+  [37.56851,126.89246],
+  [37.56871,126.89217],
+  [37.56888,126.89196],
+  [37.56945,126.89126],
+  [37.56967,126.89104],
+  [37.57009,126.89061],
+  [37.57050,126.89020],
+  [37.57051,126.89019],
+  [37.57096,126.88981],
+  [37.57118,126.88962],
+  [37.57145,126.88940],
+  [37.57164,126.88926],
+  [37.57187,126.88909],
+  [37.57234,126.88875],
+  [37.57238,126.88872],
+  [37.57278,126.88836],
+  [37.57303,126.88814],
+  [37.57338,126.88767],
+  [37.57366,126.88729],
+  [37.57390,126.88690],
+  [37.57415,126.88650],
+  [37.57423,126.88636],
+  [37.57455,126.88581],
+  [37.57471,126.88553],
+  [37.57502,126.88498],
+  [37.57534,126.88443],
+  [37.57541,126.88431],
+  [37.57566,126.88389],
+  [37.57599,126.88334],
+  [37.57631,126.88280],
+  [37.57648,126.88252],
+  [37.57663,126.88225],
+  [37.57695,126.88170],
+  [37.57727,126.88115],
+  [37.57743,126.88087],
+  [37.57759,126.88060],
+  [37.57791,126.88006],
+  [37.57823,126.87952],
+  [37.57847,126.87912],
+  [37.57856,126.87897],
+  [37.57889,126.87843],
+  [37.57922,126.87789],
+  [37.57930,126.87776],
+  [37.57954,126.87735],
+  [37.57986,126.87680],
+  [37.58017,126.87625],
+  [37.58023,126.87618],
+  [37.58023,126.87625],
+  [37.58010,126.87621],
+  [37.57983,126.87613],
+  [37.57931,126.87597],
+  [37.57863,126.87576],
+  [37.57848,126.87620],
+  [37.57826,126.87682],
+  [37.57804,126.87744],
+  [37.57787,126.87791],
+  [37.57760,126.87829],
+  [37.57725,126.87880],
+  [37.57689,126.87931],
+  [37.57671,126.87957],
+  [37.57636,126.88008],
+  [37.57620,126.88030],
+  [37.57599,126.88058],
+  [37.57581,126.88083],
+  [37.57545,126.88133],
+  [37.57508,126.88183],
+  [37.57490,126.88208],
+  [37.57484,126.88216],
+  [37.57487,126.88219],
+  [37.57458,126.88257],
+  [37.57450,126.88268],
+  [37.57407,126.88326],
+  [37.57392,126.88333],
+  [37.57375,126.88332],
+  [37.57371,126.88332],
+  [37.57321,126.88330],
+  [37.57300,126.88329],
+  [37.57254,126.88319],
+  [37.57238,126.88311],
+  [37.57219,126.88295],
+  [37.57202,126.88280],
+  [37.57198,126.88277],
+  [37.57153,126.88236],
+];
+
+const MARKERS=[
+  {ll:[37.57501,126.97704],km:0,       label:'출발',  name:'광화문광장',          color:'#e8312a',type:'start'},
+  {ll:[37.57046,126.97710],km:0.5,     label:'0.5km', name:'광화문역',            color:'#e8312a',type:'mid'},
+  {ll:[37.55930,126.96379],km:2.5,     label:'2.5km', name:'충정로역',            color:'#e8312a',type:'mid'},
+  {ll:[37.54506,126.95182],km:4.5,     label:'4.5km', name:'공덕역 2번 출구',     color:'#2563eb',type:'mid'},
+  {ll:[37.52475,126.92270],km:8,       label:'8km',   name:'여의도공원 앞',       color:'#16a34a',type:'cheer'},
+  {ll:[37.54602,126.90747],km:14,      label:'14km',  name:'합정역 9번 출구',    color:'#d97706',type:'mid'},
+  {ll:[37.56627,126.89911],km:17,      label:'17km',  name:'월드컵경기장 사거리', color:'#7c3aed',type:'mid'},
+  {ll:[37.57794,126.87772],km:20,      label:'20km',  name:'난지천 오리연못',     color:'#db2777',type:'mid'},
+  {ll:[37.57153,126.88236],km:21.0975, label:'골인',  name:'상암 평화광장',       color:'#d97706',type:'finish'},
+];
+
+const SPOTS=[
+  {km:0.5,  name:'광화문역',            sub:'0.5km', metro:'5호선 광화문역',        desc:'A조 출발 지점'},
+  {km:2.5,  name:'충정로역',            sub:'2.5km', metro:'2호선 충정로역',        desc:'초반 페이스 구간'},
+  {km:4.5,  name:'공덕역 2번 출구',    sub:'4.5km', metro:'5·6호선 공덕역',        desc:'안정 페이스 구간'},
+  {km:8,    name:'여의도공원 앞',      sub:'8km',   metro:'5호선 여의나루역',       desc:'하프/10km 교차 ✅'},
+  {km:14,   name:'합정역 9번 출구',   sub:'14km',  metro:'2·6호선 합정역',         desc:'고비 구간 🔥'},
+  {km:17,   name:'월드컵경기장 사거리',sub:'17km', metro:'6호선 월드컵경기장역',   desc:'골인 4km 전'},
+  {km:20,   name:'난지천 오리연못',    sub:'20km',  metro:'도보',                   desc:'1km 남았어!'},
+  {km:21.0975,name:'상암 평화광장',   sub:'골인',  metro:'6호선 월드컵경기장역',   desc:'완주 축하 🎉'},
+];
+
+const COURSES={
+  half:{label:'하프',total:21.0975,
+    pts:[
+      {km:0,name:'광화문',emoji:'🏁',sub:'출발'},
+      {km:0.5,name:'광화문역',emoji:'📍',sub:'0.5km'},
+      {km:2.5,name:'충정로역',emoji:'📍',sub:'2.5km'},
+      {km:4.5,name:'공덕역',emoji:'📍',sub:'4.5km'},
+      {km:8,name:'여의도',emoji:'📍',sub:'8km'},
+      {km:14,name:'합정역',emoji:'📍',sub:'14km'},
+      {km:17,name:'월드컵사거리',emoji:'📍',sub:'17km'},
+      {km:20,name:'난지천',emoji:'📍',sub:'20km'},
+      {km:21.0975,name:'평화광장',emoji:'🏆',sub:'골인'},
+    ],
+    groups:[
+      {id:'A',label:'A조',sub:'~1:30',goal:85*60,off:0},
+      {id:'B',label:'B조',sub:'1:30~2h',goal:105*60,off:10*60},
+      {id:'C',label:'C조',sub:'2h~2:30',goal:135*60,off:20*60},
+      {id:'D',label:'D조',sub:'2:30+',goal:160*60,off:30*60},
+    ],
+  },
+  '10k':{label:'10K',total:10,
+    pts:[
+      {km:0,name:'광화문',emoji:'🏁',sub:'출발'},
+      {km:4.5,name:'공덕역',emoji:'📍',sub:'4.5km'},
+      {km:8,name:'여의도',emoji:'📍',sub:'8km'},
+      {km:10,name:'여의도공원',emoji:'🏆',sub:'골인'},
+    ],
+    groups:[
+      {id:'A',label:'A조',sub:'~50분',goal:48*60,off:0},
+      {id:'B',label:'B조',sub:'50~60분',goal:55*60,off:10*60},
+      {id:'C',label:'C조',sub:'60~70분',goal:65*60,off:20*60},
+      {id:'D',label:'D조',sub:'70분+',goal:75*60,off:30*60},
+    ],
+  },
+};
+
+const COLORS=[
+  {c:'#e8312a',e:'🔴'},{c:'#2563eb',e:'🔵'},{c:'#16a34a',e:'🟢'},
+  {c:'#d97706',e:'🟡'},{c:'#7c3aed',e:'🟣'},{c:'#db2777',e:'🩷'},
+];
+
+// ══ 상태 ══
+let runners=[];
+let mySpot={km:2.5,custom:false};
+let formSt={course:'half',group:'B',h:1,m:45,s:0,ci:0};
+let liveView='matrix';
+let selectedRunnerId=null;
+let leafMap=null,spotMarker=null;
+
+// ══ 유틸 ══
+const pad=n=>String(Math.floor(Math.abs(n))).padStart(2,'0');
+const hms=t=>isFinite(t)&&t>=0?`${pad(t/3600)}:${pad(t%3600/60)}:${pad(t%60)}`:'--:--:--';
+const mss=t=>isFinite(t)&&t>=0?`${Math.floor(t/60)}'${pad(t%60)}"`:"--'--\"";
+const uid=()=>Math.random().toString(36).slice(2,7);
+
+function startSec(r){
+  const c=COURSES[r.course],g=c.groups.find(x=>x.id===r.group);
+  return 7*3600+30*60+(g?g.off:0);
+}
+function clock(sec,r){
+  const a=startSec(r)+sec;
+  return `${pad(Math.floor(a/3600)%24)}:${pad(Math.floor(a%3600/60))}`;
+}
+function splits(r){
+  const c=COURSES[r.course],goal=r.h*3600+r.m*60+r.s,avg=goal/c.total;
+  let el=0;
+  return c.pts.map((pt,i)=>{
+    if(i===0)return{...pt,sec:0};
+    el+=(pt.km-c.pts[i-1].km)*avg;
+    return{...pt,sec:el};
+  });
+}
+function interp(km,sps){
+  for(let i=1;i<sps.length;i++){
+    const a=sps[i-1],b=sps[i];
+    if(km>=a.km&&km<=b.km)return a.sec+(km-a.km)/(b.km-a.km)*(b.sec-a.sec);
+  }
+  return sps[sps.length-1].sec;
+}
+function projected(r){
+  const sp=splits(r),keys=Object.keys(r.actuals||{}).map(Number).filter(k=>k>0&&r.actuals[k]);
+  if(!keys.length)return null;
+  const last=Math.max(...keys),pt=sp[last];
+  if(!pt)return null;
+  const[ah,am]=(r.actuals[last]).split(':').map(Number);
+  const el=(ah*3600+am*60)-startSec(r);
+  if(el<=0)return null;
+  return el+(COURSES[r.course].total-pt.km)*(el/pt.km);
+}
+function sorted(){
+  const go={A:0,B:1,C:2,D:3};
+  return[...runners].sort((a,b)=>{
+    if(a.course!==b.course)return a.course==='half'?-1:1;
+    const ga=go[a.group]??9,gb=go[b.group]??9;
+    if(ga!==gb)return ga-gb;
+    return(a.h*3600+a.m*60+a.s)-(b.h*3600+b.m*60+b.s);
+  });
+}
+
+// ══ 응원 탭 ══
+function renderSpotChips(){
+  document.getElementById('spot-chips').innerHTML=
+    SPOTS.map(s=>`<button class="chip ${mySpot.km===s.km&&!mySpot.custom?'active':''}" onclick="setSpot(${s.km},this)">${s.name}<span class="ksub">${s.sub}</span></button>`).join('')+
+    `<button class="chip ${mySpot.custom?'active':''}" onclick="toggleCustom()">직접</button>`;
+}
+function setSpot(km,btn){
+  mySpot={km,custom:false};
+  document.getElementById('range-row').style.display='none';
+  renderSpotChips();renderTimeline();updateSpotMarker();
+  // 코스탭 카드 하이라이트 갱신
+  document.querySelectorAll('.scard').forEach(c=>c.classList.remove('active-spot'));
+  const el=document.getElementById('scard-'+km);
+  if(el)el.classList.add('active-spot');
+}
+function toggleCustom(){
+  mySpot.custom=true;
+  document.getElementById('range-row').style.display='block';
+  document.getElementById('spot-range').value=mySpot.km;
+  document.getElementById('range-lbl').textContent=mySpot.km+'km';
+  renderSpotChips();
+}
+function onRangeChange(v){
+  mySpot.km=parseFloat(v);
+  document.getElementById('range-lbl').textContent=v+'km';
+  renderTimeline();updateSpotMarker();
+}
+
+function renderTimeline(){
+  const sn=SPOTS.find(s=>s.km===mySpot.km),nm=sn?sn.name:mySpot.km+'km';
+  document.getElementById('cheer-title').textContent=`📣 ${nm} (${mySpot.km}km) 도착 예상`;
+  if(!runners.length){
+    document.getElementById('timeline').innerHTML=`<div style="text-align:center;padding:32px;color:var(--g400);font-size:13px">주자 탭에서 먼저 등록해주세요</div>`;
+    return;
+  }
+  const arr=sorted().filter(r=>mySpot.km<=COURSES[r.course].total).map(r=>{
+    const sp=splits(r),sec=interp(mySpot.km,sp);
+    const absMin=(startSec(r)+sec)/60;
+    const col=COLORS[r.colorIdx]||COLORS[0];
+    return{r,sec,absMin,col,ck:clock(sec,r),el:hms(sec)};
+  });
+  const slots={};
+  arr.forEach(a=>{
+    const k=Math.floor(a.absMin/10)*10;
+    const h=Math.floor(k/60)%24,m=k%60;
+    const key=`${pad(h)}:${pad(m)}`;
+    if(!slots[key])slots[key]={key,h,m,items:[]};
+    slots[key].items.push(a);
+  });
+  document.getElementById('timeline').innerHTML=
+    Object.values(slots).sort((a,b)=>a.h*60+a.m-(b.h*60+b.m)).map(sl=>{
+      const eh=Math.floor((sl.h*60+sl.m+10)/60)%24,em=(sl.m+10)%60;
+      return`<div class="slot">
+        <div class="slot-hdr">
+          <div><div class="slot-clock">${sl.key}</div><div class="slot-range">${sl.key}~${pad(eh)}:${pad(em)}</div></div>
+          <div class="slot-cnt">${sl.items.length}명</div>
+        </div>
+        ${sl.items.map(a=>`
+          <div class="rrow">
+            <div class="rdot" style="background:${a.col.c}"></div>
+            <div class="rinfo">
+              <div class="rname">${a.r.name}</div>
+              <div class="rmeta">${COURSES[a.r.course].label}·${a.r.group||'?'}조</div>
+              <div class="rmeta" style="margin-top:3px;font-family:var(--mono);font-size:11px;color:var(--g600);font-weight:600">${pad(a.r.h)}:${pad(a.r.m)}:${pad(a.r.s)}</div>
+            </div>
+            <div class="rarrival">
+              <div class="rtime" style="color:${a.col.c}">${a.ck}</div>
+              <div class="relapsed">+${a.el}</div>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    }).join('');
+}
+
+function shareCheer(){
+  if(!runners.length){alert('주자를 먼저 등록해주세요!');return;}
+  const sn=SPOTS.find(s=>s.km===mySpot.km);
+  const nm=sn?sn.name:mySpot.km+'km';
+  const lines=[`📣 2026 서하마 응원 계획`,`내 응원 지점: ${nm} (${mySpot.km}km)`,``];
+  sorted().forEach(r=>{
+    if(mySpot.km>COURSES[r.course].total)return;
+    const sec=interp(mySpot.km,splits(r));
+    lines.push(`${(COLORS[r.colorIdx]||COLORS[0]).e} ${r.name}(${r.group||'?'}조) → ${clock(sec,r)}`);
+  });
+  const txt=lines.join('\n');
+  navigator.clipboard?.writeText(txt).then(()=>{
+    const el=document.getElementById('share-ok');
+    el.style.display='block';setTimeout(()=>el.style.display='none',3000);
+  })||alert(txt);
+}
+
+// ══ 주자 탭 ══
+function renderRunners(){
+  const list=document.getElementById('runner-list');
+  const sr=sorted();
+  if(!sr.length){list.innerHTML=`<div style="text-align:center;padding:32px;color:var(--g400);font-size:13px">아직 등록된 주자가 없어요<br/><span style="font-size:12px">➕ 추가 탭에서 등록해주세요</span></div>`;return;}
+  list.innerHTML=sr.map(r=>{
+    const col=COLORS[r.colorIdx]||COLORS[0];
+    const sp=splits(r),goal=r.h*3600+r.m*60+r.s;
+    const c=COURSES[r.course],g=c.groups.find(x=>x.id===r.group);
+    const cheerSec=interp(mySpot.km,sp);
+    const proj=projected(r);
+    // 코스별 스플릿 배치
+    let row1=[], row2=[];
+    if(r.course==='half'){
+      const halfKms=[2.5,4.5,8,14,17,20];
+      const kpts=sp.filter(pt=>halfKms.includes(pt.km)&&pt.km<=c.total);
+      row1=kpts.slice(0,3); row2=kpts.slice(3);
+    } else {
+      row1=sp.filter(pt=>[4.5,8,10].includes(pt.km)&&pt.km<=c.total);
+      row2=[];
+    }
+    return`<div class="rcard" style="--rc:${col.c}">
+      <div class="rcard-hdr">
+        <div class="rcard-emoji">${col.e}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="rcard-name">${r.name}</div>
+            <span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;background:${r.course==='half'?'#dbeafe':'#dcfce7'};color:${r.course==='half'?'#1d4ed8':'#15803d'}">${c.label}</span>
+          </div>
+          <div class="rcard-sub">${g?g.label:'?'} · ${pad(r.h)}:${pad(r.m)}:${pad(r.s)}</div>
+        </div>
+        <div class="rcard-pace">${mss(goal/c.total)}/km</div>
+      </div>
+      <div class="rcard-cheer">
+        <span>🏁</span>
+        <span class="rcard-cheer-lbl">피니시 도착</span>
+        <span class="rcard-cheer-time" style="color:${col.c}">${clock(sp[sp.length-1].sec,r)}</span>
+      </div>
+      <div class="splits-wrap">
+        <div class="splits-row">${row1.map(pt=>`<div class="sc"><div class="sc-km">${pt.sub}</div><div class="sc-time">${clock(pt.sec,r)}</div></div>`).join('')}</div>
+        ${row2.length?`<div class="splits-row">${row2.map(pt=>`<div class="sc"><div class="sc-km">${pt.sub}</div><div class="sc-time">${clock(pt.sec,r)}</div></div>`).join('')}</div>`:''}
+      </div>
+      ${proj?`<div style="display:flex;align-items:center;gap:7px;margin:0 12px 8px 16px;padding:7px 10px;background:var(--green-bg);border-radius:8px;border:1px solid var(--green-border)"><span style="font-size:12px">📡</span><span style="flex:1;font-size:11px;color:var(--g600)">라이브 예상</span><span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--green)">${hms(proj)}</span></div>`:''}
+      <div class="rcard-acts">
+        <button class="ract" onclick="goLive('${r.id}')">⏱ 라이브 입력</button>
+        <button class="ract danger" onclick="delRunner('${r.id}')">삭제</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function delRunner(id){
+  // 하단 오버라이드 버전이 실제 동작함
+}
+
+function goLive(id){
+  selectedRunnerId=id;
+  switchTab('p-live');
+  setLiveView('person');
+}
+
+// ══ 추가 탭 ══
+function renderFGroup(){
+  document.getElementById('f-group').innerHTML=COURSES[formSt.course].groups.map(g=>`
+    <button class="tgl ${formSt.group===g.id?'active':''}" onclick="fGroup('${g.id}',this)">${g.label}</button>`).join('');
+}
+function renderFColors(){
+  document.getElementById('f-colors').innerHTML=COLORS.map((c,i)=>`
+    <div class="cdot ${formSt.ci===i?'active':''}" style="background:${c.c}" onclick="fColor(${i})">${formSt.ci===i?'✓':''}</div>`).join('');
+}
+function fCourse(c,btn){
+  formSt.course=c;
+  document.querySelectorAll('#f-course .tgl').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFGroup();updateFPace();
+}
+function fGroup(id,btn){
+  formSt.group=id;
+  const g=COURSES[formSt.course].groups.find(x=>x.id===id);
+  if(g){formSt.h=Math.floor(g.goal/3600);formSt.m=Math.floor(g.goal%3600/60);formSt.s=0;}
+  document.querySelectorAll('#f-group .tgl').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('f-h').textContent=pad(formSt.h);
+  document.getElementById('f-m').textContent=pad(formSt.m);
+  document.getElementById('f-s').textContent=pad(formSt.s);
+  updateFPace();
+}
+function fColor(i){formSt.ci=i;renderFColors();}
+function fAdj(f,d){
+  formSt[f]=Math.max(0,Math.min(f==='h'?9:59,formSt[f]+d));
+  document.getElementById(`f-${f}`).textContent=pad(formSt[f]);
+  updateFPace();
+}
+function updateFPace(){
+  const g=formSt.h*3600+formSt.m*60+formSt.s;
+  document.getElementById('f-pace').textContent=g>0?mss(g/COURSES[formSt.course].total):'—';
+}
+function addRunner(){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){document.getElementById('f-name').focus();return;}
+  runners.push({id:uid(),name,course:formSt.course,group:formSt.group,h:formSt.h,m:formSt.m,s:formSt.s,colorIdx:formSt.ci,actuals:{}});
+  formSt.ci=(formSt.ci+1)%COLORS.length;
+  document.getElementById('f-name').value='';
+  renderFColors();renderRunners();renderTimeline();renderLive();
+  // 추가 후 주자 탭으로 이동
+  switchTab('p-runners');
+}
+
+// ══ 라이브 탭 ══
+function renderLive(){
+  const sr=sorted();
+  if(!sr.length){
+    document.getElementById('live-selector').innerHTML='<div style="color:var(--g400);font-size:13px;padding:8px 0">주자를 먼저 등록해주세요</div>';
+    document.getElementById('live-person-view').innerHTML='';
+    document.getElementById('live-matrix-view').innerHTML='';
+    return;
+  }
+  // 선택된 주자 없으면 첫 번째로
+  if(!selectedRunnerId||!runners.find(r=>r.id===selectedRunnerId))
+    selectedRunnerId=sr[0].id;
+
+  // 상단 선택 버튼
+  document.getElementById('live-selector').innerHTML=sr.map(r=>{
+    const col=COLORS[r.colorIdx]||COLORS[0];
+    const active=r.id===selectedRunnerId;
+    return`<button class="live-sel-btn ${active?'active':''}" style="${active?`border-color:${col.c};color:${col.c}`:''}\" onclick="selectRunner('${r.id}')">
+      <div class="dot" style="background:${col.c}"></div>${r.name}
+    </button>`;
+  }).join('');
+
+  if(liveView==='person') renderPersonView();
+  else renderMatrixView();
+}
+
+function selectRunner(id){
+  selectedRunnerId=id;
+  renderLive();
+}
+
+function setLiveView(v){
+  liveView=v;
+  document.getElementById('lt-matrix').classList.toggle('active',v==='matrix');
+  document.getElementById('lt-person').classList.toggle('active',v==='person');
+  document.getElementById('live-person-view').style.display=v==='person'?'block':'none';
+  document.getElementById('live-matrix-view').style.display=v==='matrix'?'block':'none';
+  if(v==='person')renderPersonView();
+  else renderMatrixView();
+}
+
+function renderPersonView(){
+  const r=runners.find(x=>x.id===selectedRunnerId);
+  if(!r){document.getElementById('live-person-view').innerHTML='';return;}
+  const col=COLORS[r.colorIdx]||COLORS[0];
+  const sp=splits(r),proj=projected(r),goal=r.h*3600+r.m*60+r.s;
+  document.getElementById('live-person-view').innerHTML=`
+    <div class="live-person">
+      <div class="live-phdr">
+        <div class="live-pdot" style="background:${col.c}"></div>
+        <div class="live-pname" style="color:${col.c}">${r.name}</div>
+        <div class="live-pmeta">${COURSES[r.course].label}·${r.group||'?'}조·목표${pad(r.h)}:${pad(r.m)}</div>
+      </div>
+      ${sp.map((pt,i)=>`
+        <div class="lsplit">
+          <span class="lsplit-emoji">${pt.emoji}</span>
+          <div class="lsplit-info">
+            <div class="lsplit-name">${pt.name}</div>
+            <div class="lsplit-exp">예상 ${clock(pt.sec,r)}</div>
+          </div>
+          <input type="time" class="lsplit-input ${r.actuals&&r.actuals[i]?'filled':''}"
+            id="li-${r.id}-${i}" value="${r.actuals&&r.actuals[i]||''}"
+            oninput="setActual('${r.id}',${i},this.value)"/>
+        </div>`).join('')}
+      ${proj?`<div class="proj-bar">
+        <div style="font-size:20px">📡</div>
+        <div><div class="proj-time">${hms(proj)}</div>
+        <div class="proj-diff ${proj<goal?'fast':'slow'}">${proj<goal?'🔥 목표보다 빠름':'⚠️ 목표보다 느림'}</div></div>
+      </div>`:''}
+    </div>`;
+}
+
+function renderMatrixView(){
+  const sr=sorted();
+  if(!sr.length)return;
+  // 구간 헤더: 모든 코스의 pts 합집합
+  const allPts=[{sub:'출발',km:0},{sub:'4.5km',km:4.5},{sub:'8km',km:8},{sub:'14km',km:14},{sub:'17km',km:17},{sub:'20km',km:20},{sub:'골인',km:21.0975}];
+  document.getElementById('live-matrix-view').innerHTML=`
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <thead><tr>
+          <th class="name-col">이름</th>
+          ${allPts.map(p=>`<th>${p.sub}</th>`).join('')}
+        </tr></thead>
+        <tbody>
+          ${sr.map(r=>{
+            const col=COLORS[r.colorIdx]||COLORS[0];
+            const sp=splits(r);
+            const proj=projected(r);
+            const projSp=proj?buildProjSplits(r,proj):null;
+            return`<tr>
+              <td class="name-cell"><span class="dot" style="background:${col.c}"></span>${r.name}</td>
+              ${allPts.map(p=>{
+                if(p.km>COURSES[r.course].total) return`<td style="background:var(--g100);color:var(--g300)">—</td>`;
+                const baseSec=interp(p.km,sp);
+                const liveSec=projSp?interp(p.km,projSp):null;
+                const displaySec=liveSec??baseSec;
+                const hasLive=liveSec!==null&&liveSec!==baseSec;
+                return`<td class="${hasLive?'live-cell':''}">${clock(displaySec,r)}${hasLive?'<sup style="font-size:8px;color:var(--green)">📡</sup>':''}</td>`;
+              }).join('')}
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function buildProjSplits(r,projSec){
+  const c=COURSES[r.course],avg=projSec/c.total;
+  let el=0;
+  return c.pts.map((pt,i)=>{if(i===0)return{...pt,sec:0};el+=(pt.km-c.pts[i-1].km)*avg;return{...pt,sec:el};});
+}
+
+function setActual(rid,idx,val){
+  const r=runners.find(x=>x.id===rid);
+  if(!r)return;
+  if(!r.actuals)r.actuals={};
+  if(val)r.actuals[idx]=val; else delete r.actuals[idx];
+  document.getElementById(`li-${rid}-${idx}`)?.classList.toggle('filled',!!val);
+  renderPersonView();
+  renderMatrixView();
+  renderTimeline();
+  renderRunners();
+}
+
+// ══ 코스 지도 ══
+function initMap(){
+  if(leafMap)return;
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+  s.onload=()=>{
+    leafMap=L.map('course-map',{center:[37.548,126.928],zoom:12,zoomControl:true,attributionControl:false});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(leafMap);
+    L.polyline(COORDS,{color:'#e8312a',weight:4,opacity:.85}).addTo(leafMap);
+    // 마커는 위 핸들러로 대체됨
+    updateSpotMarker();
+
+    // 응원 지점 마커에 클릭 핸들러 — 주자 위치 표시
+    MARKERS.forEach(m => {
+      const sz = m.type==='start'||m.type==='finish' ? 14 : 10;
+      const icon = L.divIcon({className:'',
+        html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${m.color};border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.3);cursor:pointer"></div>`,
+        iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
+      L.marker(m.ll,{icon}).addTo(leafMap)
+        .on('click', () => { selectMapSpot(m.km); });
+
+      // 구간 레이블
+      const licon = L.divIcon({className:'',
+        html:`<div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:700;color:#374151;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.1);pointer-events:none">${m.name}</div>`,
+        iconSize:[null,null],iconAnchor:[0,0]});
+      L.marker([m.ll[0]+0.0012, m.ll[1]], {icon:licon, interactive:false}).addTo(leafMap);
+    });
+
+  };
+  document.head.appendChild(s);
+
+  renderMapSpotChips();
+}
+
+function updateSpotMarker(){
+  if(!leafMap||typeof L==='undefined')return;
+  const [lat,lng]=kmToLatLng(mySpot.km);
+  const icon=L.divIcon({className:'',html:`<div style="width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.1);border:3px solid #111;box-shadow:0 0 0 3px rgba(0,0,0,.08)"></div>`,iconSize:[18,18],iconAnchor:[9,9]});
+  if(spotMarker)spotMarker.setLatLng([lat,lng]);
+  else spotMarker=L.marker([lat,lng],{icon,zIndexOffset:1000}).addTo(leafMap).bindPopup(`📣 내 응원 지점 ${mySpot.km}km`);
+}
+
+// ══ 지도 주자 위치 표시 ══
+let runnerMarkers = [];
+
+const CUM=[0.0,6.9,30.0,60.0,120.0,157.0,179.9,239.9,262.7,299.9,359.9,362.8,394.0,419.9,479.8,496.4,505.4,512.1,519.9,524.4,528.8,535.5,539.8,545.6,551.2,592.4,599.8,629.8,656.9,689.8,728.0,749.7,809.7,846.0,869.4,899.4,925.0,929.7,989.7,1049.6,1080.7,1116.3,1135.2,1139.6,1147.5,1168.7,1221.5,1243.2,1259.6,1276.8,1297.3,1312.1,1319.5,1330.6,1363.5,1379.5,1406.4,1413.4,1439.5,1481.1,1486.8,1529.5,1564.1,1576.9,1589.5,1619.4,1632.1,1644.0,1679.4,1681.7,1723.2,1739.4,1799.4,1869.6,1884.4,1898.3,1919.3,1971.1,1976.5,1979.3,2028.2,2039.3,2083.1,2092.2,2099.3,2140.6,2169.7,2189.2,2226.5,2249.2,2268.6,2296.9,2309.2,2318.3,2339.2,2399.2,2443.3,2455.9,2459.2,2487.7,2521.8,2547.1,2579.1,2594.8,2639.1,2650.0,2669.1,2676.3,2710.1,2759.0,2819.0,2879.0,2909.0,2967.1,2992.8,3029.0,3088.9,3129.1,3167.3,3208.9,3254.7,3268.9,3328.9,3388.8,3448.8,3478.8,3505.3,3538.8,3598.8,3628.7,3685.4,3688.7,3718.7,3778.7,3780.4,3838.7,3898.7,3958.6,4018.6,4059.2,4078.6,4108.6,4146.7,4171.0,4228.5,4254.6,4282.2,4288.5,4326.9,4348.5,4400.8,4408.5,4468.5,4470.6,4510.6,4528.4,4535.6,4588.4,4601.0,4648.4,4653.4,4667.8,4708.4,4768.4,4834.8,4850.9,4888.3,4918.3,4978.3,5026.8,5038.3,5041.5,5072.1,5098.2,5128.2,5188.2,5248.2,5308.2,5338.2,5373.7,5398.1,5458.1,5486.0,5518.1,5544.2,5576.7,5581.3,5608.1,5637.3,5668.0,5685.0,5694.3,5701.7,5717.0,5728.0,5788.0,5818.0,5846.3,5857.5,5878.0,5892.8,5938.0,5997.9,6057.9,6117.9,6147.9,6207.9,6267.8,6327.8,6387.8,6447.8,6507.8,6537.7,6597.7,6627.7,6687.7,6747.7,6807.7,6867.6,6913.9,6927.6,6957.6,7014.8,7047.6,7066.7,7102.8,7107.5,7116.1,7125.0,7127.4,7140.4,7146.0,7149.7,7156.7,7175.5,7183.3,7196.0,7197.5,7229.7,7235.8,7249.9,7252.7,7287.5,7347.5,7407.4,7410.3,7437.4,7497.4,7508.5,7557.4,7612.9,7633.6,7646.0,7677.4,7737.3,7797.3,7818.8,7857.3,7917.3,7977.2,8037.2,8047.5,8068.2,8084.8,8097.2,8116.6,8157.2,8217.2,8277.1,8337.1,8387.5,8427.1,8457.1,8517.1,8519.7,8541.1,8578.5,8637.0,8638.8,8697.0,8786.5,8817.0,8876.9,8934.4,8936.9,8996.9,9026.9,9086.9,9143.1,9146.8,9206.8,9266.8,9326.8,9386.8,9446.7,9506.7,9566.7,9626.7,9686.7,9806.6,9836.6,9896.6,9956.6,10030.9,10076.5,10136.5,10196.5,10226.5,10286.5,10346.4,10406.4,10488.9,10526.4,10586.3,10646.3,10676.3,10736.3,10766.3,10826.3,10862.6,10886.2,10916.2,10976.2,11036.2,11096.2,11135.3,11186.1,11246.1,11276.1,11336.1,11396.1,11442.9,11486.0,11546.0,11606.0,11636.0,11696.0,11726.0,11785.9,11830.2,11875.9,11935.9,11995.9,12055.8,12085.8,12175.5,12205.8,12265.8,12295.8,12355.7,12415.7,12445.7,12513.9,12565.7,12595.7,12655.6,12685.6,12745.6,12805.6,12835.6,12887.1,12925.5,12985.5,13045.5,13105.5,13165.5,13225.4,13255.4,13315.4,13345.4,13405.4,13465.4,13495.3,13555.3,13601.1,13645.3,13705.3,13765.3,13795.2,13855.2,13915.2,13975.2,14035.2,14065.2,14117.4,14125.1,14148.9,14185.1,14215.1,14229.1,14244.4,14268.8,14305.5,14343.6,14355.4,14365.0,14376.4,14409.4,14444.7,14455.0,14479.7,14492.4,14515.0,14519.7,14541.6,14588.2,14626.4,14629.9,14654.0,14692.6,14694.9,14754.9,14792.9,14814.9,14874.9,14934.8,14994.8,15024.8,15084.8,15114.8,15174.8,15234.7,15264.7,15324.7,15384.7,15414.7,15474.0,15534.6,15564.6,15624.6,15684.6,15714.6,15774.6,15834.5,15894.5,15924.5,15984.5,16044.5,16074.5,16134.4,16194.4,16224.4,16284.4,16344.4,16374.4,16434.3,16438.7,16503.8,16508.9,16518.0,16533.1,16543.9,16554.3,16584.3,16592.2,16629.1,16644.3,16674.2,16697.5,16748.6,16759.2,16782.9,16794.2,16840.1,16854.2,16862.2,16884.2,16908.1,16944.2,16995.1,17034.1,17070.9,17094.1,17120.2,17154.1,17155.5,17170.5,17176.8,17204.3,17210.6,17244.1,17262.0,17304.0,17337.0,17364.0,17392.9,17443.8,17484.0,17512.9,17544.0,17589.3,17603.9,17663.9,17697.9,17723.9,17812.8,17843.8,17903.8,17962.4,17963.8,18023.8,18053.8,18089.4,18113.8,18143.7,18203.7,18208.9,18263.7,18297.4,18353.7,18400.0,18443.6,18488.4,18503.6,18563.6,18593.6,18653.6,18713.5,18726.9,18773.5,18833.5,18893.5,18924.5,18953.5,19013.4,19073.4,19104.2,19133.4,19193.4,19253.4,19297.0,19313.3,19373.3,19433.3,19448.2,19493.3,19553.3,19612.7,19621.8,19628.0,19643.2,19673.2,19733.2,19811.1,19853.2,19913.1,19973.1,20018.5,20063.1,20123.1,20183.0,20213.0,20273.0,20299.3,20333.0,20363.0,20423.0,20482.9,20512.9,20522.3,20526.6,20572.9,20586.2,20656.2,20674.0,20692.9,20697.4,20752.8,20776.4,20828.3,20847.4,20872.8,20895.9,20901.1,20962.8];
+function kmToLatLng(km) {
+  const target = km * 1000;
+  for(let i=1;i<CUM.length;i++){
+    if(CUM[i]>=target){
+      const frac=(target-CUM[i-1])/(CUM[i]-CUM[i-1]);
+      return[
+        COORDS[i-1][0]+frac*(COORDS[i][0]-COORDS[i-1][0]),
+        COORDS[i-1][1]+frac*(COORDS[i][1]-COORDS[i-1][1]),
+      ];
+    }
+  }
+  return COORDS[COORDS.length-1];
+}
+
+function showRunnersAtSpot(spotKm) {
+  if(!leafMap || typeof L === 'undefined') { initMap(); setTimeout(()=>showRunnersAtSpot(spotKm), 800); return; }
+
+  // 기존 주자 마커 제거
+  runnerMarkers.forEach(m => leafMap.removeLayer(m));
+  runnerMarkers = [];
+
+  if(!runners.length) return;
+
+  const sr = sorted();
+
+  // 기준 시각: spotKm을 통과하는 주자들 중 가장 빠른 주자의 통과 시각
+  // → 응원단이 그 지점에 서있을 때 기준 (첫 주자 통과 ~ 마지막 주자 통과 범위)
+  const validRunners = sr.filter(r => spotKm <= COURSES[r.course].total);
+  if(!validRunners.length) return;
+
+  const passTimes = validRunners.map(r => startSec(r) + interp(spotKm, splits(r)));
+  // 첫 주자와 마지막 주자의 중간 시각 사용 (응원 체류 시간 중간)
+  const minTime = Math.min(...passTimes);
+  const maxTime = Math.max(...passTimes);
+  const refAbsSec = (minTime + maxTime) / 2;
+
+  // 그 시각에 각 주자가 몇 km 지점에 있는지 계산
+  sr.forEach(r => {
+    const col = COLORS[r.colorIdx] || COLORS[0];
+    const total = COURSES[r.course].total;
+    const goal = r.h*3600+r.m*60+r.s;
+    if(goal <= 0) return;
+
+    const elapsed = refAbsSec - startSec(r);
+    // 아직 출발 안 한 주자도 표시 (출발선 부근)
+    const effectiveElapsed = Math.max(elapsed, 0);
+    if(effectiveElapsed > goal + 1800) return;
+
+    const pace = goal / total;
+    const km = Math.min(effectiveElapsed / pace, total);
+    const [lat, lng] = kmToLatLng(Math.min(km, 21.0975));
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="background:${col.c};border:2px solid #fff;border-radius:20px;padding:3px 8px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25)">${r.name} <span style="opacity:.8;font-size:9px">${Math.round(km*10)/10}km</span></div>`,
+      iconSize: [null, null],
+      iconAnchor: [0, 12],
+    });
+    const marker = L.marker([lat, lng], {icon}).addTo(leafMap);
+    runnerMarkers.push(marker);
+  });
+
+  // 지도 중심: 응원 지점으로 이동
+  const [clat, clng] = kmToLatLng(Math.min(spotKm, 21.0975));
+  leafMap.setView([clat, clng], 14, {animate: true});
+}
+
+// 지도 탭에서 선택된 응원 지점 km
+let mapSelectedSpotKm = null;
+
+function renderMapSpotChips(){
+  const el = document.getElementById('map-spot-chips');
+  if(!el) return;
+  const activeKm = mapSelectedSpotKm ?? mySpot.km;
+  el.innerHTML = SPOTS.map(s => {
+    const active = activeKm===s.km;
+    const col = s.color||'#e8312a';
+    const style = active
+      ? `background:${col};border-color:${col};color:#fff;box-shadow:0 2px 8px ${col}55`
+      : `border-color:transparent`;
+    return `<button class="map-chip ${active?'active':''}" style="${style}" onclick="selectMapSpot(${s.km})">${s.name} <span style="opacity:.65;font-size:9px">${s.sub}</span></button>`;
+  }).join('');
+}
+
+function selectMapSpot(km){
+  mapSelectedSpotKm = km;
+  renderMapSpotChips();
+  if(leafMap){
+    const [lat,lng] = kmToLatLng(km);
+    leafMap.setView([lat,lng], 14, {animate:true});
+  }
+  showRunnersAtSpot(km);
+  showMapToast('📍 ' + (SPOTS.find(s=>s.km===km)?.name||km+'km') + ' 기준 주자 위치 표시');
+}
+
+function onMapSpotBtn(){
+  const km = mapSelectedSpotKm ?? mySpot.km;
+  showRunnersAtSpot(km);
+  showMapToast('📍 ' + (SPOTS.find(s=>s.km===km)?.name||km+'km') + ' 기준 주자 위치 표시');
+}
+
+function clearRunnerMarkers(){
+  if(leafMap){
+    runnerMarkers.forEach(m=>leafMap.removeLayer(m));
+    runnerMarkers=[];
+  }
+  showMapToast('✕ 마커를 초기화했어요');
+}
+
+let toastTimer=null;
+function showMapToast(msg){
+  const el=document.getElementById('map-toast');
+  if(!el)return;
+  el.textContent=msg;
+  el.classList.add('show');
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+function showAllRunnersNow(refKm) {
+  const km = refKm ?? mapSelectedSpotKm ?? mySpot.km;
+  if(!leafMap || typeof L==='undefined'){
+    initMap();
+    setTimeout(()=>showAllRunnersNow(km), 900);
+    return;
+  }
+  showRunnersAtSpot(km);
+}
+
+// ══ 탭 전환 ══
+function switchTab(pane){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`[data-pane="${pane}"]`).classList.add('active');
+  document.getElementById(pane).classList.add('active');
+  if(pane==='p-cheer'){renderSpotChips();renderTimeline();}
+  if(pane==='p-runners')renderRunners();
+  if(pane==='p-timeline')renderTimeline_tab();
+  if(pane==='p-live')renderLive();
+  if(pane==='p-course'){
+    initMap();
+    renderMapSpotChips();
+    setTimeout(()=>{ if(leafMap) leafMap.invalidateSize(); }, 50);
+    setTimeout(()=>{ if(leafMap) leafMap.invalidateSize(); }, 300);
+  }
+}
+
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click',()=>switchTab(btn.dataset.pane));
+});
+
+// ══ 초기화 ══
+const PRESET=[
+  // 10K
+  {name:'장우석', course:'10k', group:'A', h:0, m:36, s:40, colorIdx:3},
+  {name:'박재현', course:'10k', group:'A', h:0, m:38, s:0,  colorIdx:4},
+  {name:'최지현', course:'10k', group:'A', h:0, m:42, s:0,  colorIdx:1},
+  {name:'이다현', course:'10k', group:'A', h:0, m:47, s:0,  colorIdx:5},
+  {name:'한석기', course:'10k', group:'C', h:0, m:42, s:0,  colorIdx:2},
+  {name:'김진영', course:'10k', group:'C', h:0, m:50, s:0,  colorIdx:0},
+  // Half
+  {name:'김태지', course:'half',group:'A', h:1, m:39, s:0,  colorIdx:4},
+  {name:'한성범', course:'half',group:'B', h:1, m:35, s:0,  colorIdx:1},
+  {name:'김성호', course:'half',group:'B', h:1, m:40, s:0,  colorIdx:3},
+  {name:'유민상', course:'half',group:'B', h:1, m:45, s:0,  colorIdx:0},
+  {name:'김소연', course:'half',group:'B', h:1, m:55, s:0,  colorIdx:4},
+  {name:'구현우', course:'half',group:'B', h:2, m:0,  s:0,  colorIdx:5},
+  {name:'소유현', course:'half',group:'C', h:1, m:55, s:0,  colorIdx:3},
+  {name:'이혜은', course:'half',group:'C', h:2, m:30, s:0,  colorIdx:2},
+  {name:'김예진', course:'half',group:'D', h:1, m:44, s:0,  colorIdx:3},
+  {name:'임동준', course:'half',group:'D', h:1, m:50, s:0,  colorIdx:5},
+  {name:'이승연', course:'half',group:'D', h:1, m:55, s:0,  colorIdx:0},
+];
+PRESET.forEach((r,i)=>runners.push({id:'p'+i,...r,actuals:{}}));
+
+renderFGroup();renderFColors();updateFPace();
+
+// ══ Firebase Realtime DB 연동 ══
+// ▶ 아래 firebaseConfig를 본인 프로젝트 값으로 교체하세요
+const firebaseConfig = {
+  apiKey: "AIzaSyBSr-HU5veGk41Fvu223cjbQP--UCHXvAA",
+  authDomain: "sprinthalfmarathon.firebaseapp.com",
+  databaseURL: "https://sprinthalfmarathon-default-rtdb.firebaseio.com",
+  projectId: "sprinthalfmarathon",
+  storageBucket: "sprinthalfmarathon.firebasestorage.app",
+  messagingSenderId: "276000892843",
+  appId: "1:276000892843:web:5709199007adcc0377d4ee",
+  measurementId: "G-TQ2GQW04J0"
+};
+
+let db = null;
+let fbInited = false;
+
+function initFirebase() {
+  if (fbInited) return;
+  fbInited = true;
+  // Firebase SDK (compat)
+  const scripts = [
+    'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
+    'https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js',
+  ];
+  let loaded = 0;
+  scripts.forEach(src => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => { if (++loaded === scripts.length) onFirebaseReady(); };
+    document.head.appendChild(s);
+  });
+}
+
+function onFirebaseReady() {
+  if (firebaseConfig.apiKey === 'YOUR_API_KEY') {
+    showSyncBadge('⚠️ Firebase 미설정', '#d97706');
+    return;
+  }
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+
+  // 주자 목록 실시간 수신
+  db.ref('runners').on('value', snap => {
+    const data = snap.val();
+    // 서버 데이터로 로컬 runners 교체 (actuals 포함)
+    if (data) {
+      runners = Object.values(data);
+    } else {
+      // DB 비어있으면 PRESET 업로드
+      PRESET.forEach((r, i) => {
+        const runner = {id:'p'+i, ...r, actuals:{}};
+        db.ref('runners/' + runner.id).set(runner);
+      });
+      return;
+    }
+    renderSpotChips(); renderTimeline();
+    renderRunners(); renderLive();
+    showSyncBadge('🔴 실시간 연결됨', '#16a34a');
+  });
+}
+
+// addRunner 오버라이드
+const _origAddRunner = addRunner;
+function addRunner() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { document.getElementById('f-name').focus(); return; }
+  const runner = {
+    id: uid(), name,
+    course: formSt.course, group: formSt.group,
+    h: formSt.h, m: formSt.m, s: formSt.s,
+    colorIdx: formSt.ci, actuals: {}
+  };
+  formSt.ci = (formSt.ci + 1) % COLORS.length;
+  document.getElementById('f-name').value = '';
+  renderFColors();
+  if (db) {
+    db.ref('runners/' + runner.id).set(runner);
+    // 렌더는 on('value') 콜백이 처리
+  } else {
+    runners.push(runner);
+    renderRunners(); renderTimeline(); renderLive();
+  }
+  switchTab('p-runners');
+}
+
+
+// ══ 타임라인 탭 ══
+// 응원단 조별 이동 계획 (사진 기반)
+const CHEER_TEAMS = [
+  {
+    id:'A',
+    label:'A조 응원단',
+    color:'#2563eb',
+    bg:'#1d4ed8',
+    members:'(여의도에서 10K 주자 챙기기)',
+    steps:[
+      {
+        time:'07:25',
+        place:'광화문역 500m 지점',
+        detail:'출발 전 집결 · 주자들 출발 응원',
+        icon:'🏁',
+        badge:'출발 응원',
+        badgeColor:'#dbeafe',
+        badgeText:'#1d4ed8',
+        stay:'07:25~08:10',
+      },
+      {
+        time:'08:10',
+        place:'여의도공원 앞 이동',
+        detail:'지하철 5호선 광화문역 → 여의나루역 (도보 5분 포함, 약 30분)',
+        icon:'🚇',
+        badge:'이동',
+        badgeColor:'#f3f4f6',
+        badgeText:'#374151',
+      },
+      {
+        time:'08:40',
+        place:'8km 여의도공원 앞 도착',
+        detail:'10K 주자 응원 · 하프 주자도 이 구간 통과\n10K 주자 피니시(여의도공원) 확인 후 함께 이동',
+        icon:'📣',
+        badge:'핵심 지점',
+        badgeColor:'#dcfce7',
+        badgeText:'#15803d',
+        stay:'08:40~09:00',
+      },
+      {
+        time:'09:00',
+        place:'피니시 라인 이동',
+        detail:'여의나루역 → 월드컵경기장역 (약 20분)\n서울 마포구 중산로 32',
+        icon:'🚇',
+        badge:'이동',
+        badgeColor:'#f3f4f6',
+        badgeText:'#374151',
+      },
+      {
+        time:'09:20',
+        place:'상암 평화광장 피니시',
+        detail:'하프 주자 골인 응원 🎉',
+        icon:'🏆',
+        badge:'피니시',
+        badgeColor:'#fef3c7',
+        badgeText:'#92400e',
+        isFinish:true,
+      },
+    ]
+  },
+  {
+    id:'B',
+    label:'B조 응원단',
+    color:'#d97706',
+    bg:'#b45309',
+    members:'',
+    steps:[
+      {
+        time:'07:35',
+        place:'4.5km 공덕역 2번 출구 앞',
+        detail:'지하철 5·6호선 공덕역 2번 출구 바로 앞\n주자들 초반 안정 구간 응원',
+        icon:'📣',
+        badge:'1번 지점',
+        badgeColor:'#fef3c7',
+        badgeText:'#92400e',
+        stay:'07:35~08:15',
+      },
+      {
+        time:'08:15',
+        place:'서울월드컵경기장 자전거대여소 이동',
+        detail:'공덕역 2번 출구 → 6호선 월드컵경기장 하차 (12분)\n→ 월드컵경기장 1번 출구에서 도보 8분 (약 25분 소요)',
+        icon:'🚇',
+        badge:'이동',
+        badgeColor:'#f3f4f6',
+        badgeText:'#374151',
+      },
+      {
+        time:'08:40',
+        place:'17.3km 서울월드컵경기장 자전거대여소',
+        detail:'다리 밑 · 골인 4km 전 마지막 응원 🔥',
+        icon:'📣',
+        badge:'핵심 지점',
+        badgeColor:'#dcfce7',
+        badgeText:'#15803d',
+        stay:'08:40~09:00',
+      },
+      {
+        time:'09:00',
+        place:'피니시 라인 이동',
+        detail:'월드컵경기장역 → 상암 평화광장 도보 10분\n서울 마포구 중산로 32',
+        icon:'🚶',
+        badge:'이동',
+        badgeColor:'#f3f4f6',
+        badgeText:'#374151',
+      },
+      {
+        time:'09:10',
+        place:'상암 평화광장 피니시',
+        detail:'하프 주자 골인 응원 🎉',
+        icon:'🏆',
+        badge:'피니시',
+        badgeColor:'#fef3c7',
+        badgeText:'#92400e',
+        isFinish:true,
+      },
+    ]
+  },
+  {
+    id:'C',
+    label:'C조 응원단',
+    color:'#7c3aed',
+    bg:'#6d28d9',
+    members:'',
+    steps:[
+      {
+        time:'07:40',
+        place:'2.5km 충정로역 2번 출구 앞',
+        detail:'2호선 충정로역 2번 출구 (도보 2분)\n주자들 초반 응원',
+        icon:'📣',
+        badge:'1번 지점',
+        badgeColor:'#f5f3ff',
+        badgeText:'#6d28d9',
+        stay:'07:40~08:05',
+      },
+      {
+        time:'08:05',
+        place:'합정역 9번 출구 이동',
+        detail:'충정로역 2번 출구 → 2호선 합정역 하차 (9분)\n→ 9번 출구 도보 3분 (총 15분 소요)',
+        icon:'🚇',
+        badge:'이동',
+        badgeColor:'#f3f4f6',
+        badgeText:'#374151',
+      },
+      {
+        time:'08:20',
+        place:'14km 합정역 9번 출구 앞',
+        detail:'2·6호선 합정역 9번 출구 앞\n후반 고비 구간 — 응원 효과 최고 🔥',
+        icon:'📣',
+        badge:'핵심 지점',
+        badgeColor:'#dcfce7',
+        badgeText:'#15803d',
+        stay:'08:20~08:55',
+      },
+      {
+        time:'08:55',
+        place:'피니시 라인 이동',
+        detail:'합정역 9번 출구 → 6호선 월드컵경기장역 하차 (4분)\n→ 2번 출구에서 상암 평화광장 도보 17분',
+        icon:'🚇',
+        badge:'이동',
+        badgeColor:'#f3f4f6',
+        badgeText:'#374151',
+      },
+      {
+        time:'09:15',
+        place:'상암 평화광장 피니시',
+        detail:'하프 주자 골인 응원 🎉',
+        icon:'🏆',
+        badge:'피니시',
+        badgeColor:'#fef3c7',
+        badgeText:'#92400e',
+        isFinish:true,
+      },
+    ]
+  },
+];
+
+function renderTimeline_tab(){
+  const el = document.getElementById('timeline-content');
+  if(!el) return;
+
+  const sorted_runners = sorted();
+  // 현재 선택된 조 (없으면 A)
+  const sel = window._tlSel || 'A';
+
+  const team = CHEER_TEAMS.find(t => t.id === sel);
+  const teamRunners = sorted_runners.filter(r => r.course==='half' && r.group===sel);
+
+  el.innerHTML = `
+    <!-- 조 선택 버튼 -->
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      ${CHEER_TEAMS.map(t => `
+        <button onclick="selectTlTeam('${t.id}')" style="
+          flex:1;padding:10px 4px;border:none;border-radius:10px;
+          font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;
+          transition:all .15s;
+          background:${sel===t.id ? t.bg : '#f3f4f6'};
+          color:${sel===t.id ? '#fff' : '#6b7280'};
+          box-shadow:${sel===t.id ? '0 2px 8px rgba(0,0,0,.15)' : 'none'}
+        ">${t.label}</button>
+      `).join('')}
+    </div>
+
+    <!-- 선택된 조 타임라인 -->
+    <div class="tl-group-hdr" style="background:${team.bg}">
+      <span style="font-size:16px">📣</span>
+      <div>
+        <div class="tl-group-title">${team.label} ${team.members}</div>
+        ${teamRunners.length ? `<div style="font-size:10px;color:rgba(255,255,255,0.8);margin-top:2px">담당 주자: ${teamRunners.map(r=>r.name).join(' · ')}</div>` : ''}
+      </div>
+    </div>
+
+    ${team.steps.map((step, i) => {
+      const isLast = i === team.steps.length - 1;
+      return `
+      <div class="tl-item">
+        <div class="tl-line-col">
+          <div class="tl-dot" style="background:${isLast?'#f59e0b':team.color};border-color:${isLast?'#f59e0b':team.color}"></div>
+          ${!isLast?`<div class="tl-vline" style="background:${team.color}22"></div>`:''}
+        </div>
+        <div class="tl-body">
+          <div class="tl-time" style="color:${isLast?'#f59e0b':team.color}">${step.time}</div>
+          <div class="tl-place">${step.icon} ${step.place}</div>
+          <div class="tl-detail">${step.detail.split('\\n').join('<br/>')}</div>
+          ${step.stay?`<div style="font-size:10px;color:var(--g400);margin-top:3px">⏰ 응원 시간: ${step.stay}</div>`:''}
+          <span class="tl-badge" style="background:${step.badgeColor};color:${step.badgeText}">${step.badge}</span>
+          ${step.isFinish && teamRunners.length ? `
+            <div style="margin-top:6px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:7px 10px">
+              <div style="font-size:10px;color:var(--g500);margin-bottom:3px">담당 주자 골인 예상</div>
+              ${teamRunners.map(r=>{
+                const sp=splits(r);
+                const finSec=sp[sp.length-1].sec;
+                return `<div style="display:flex;justify-content:space-between;align-items:center;padding:2px 0">
+                  <span style="font-size:12px;font-weight:600">${r.name}</span>
+                  <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:${COLORS[r.colorIdx]?.c||'#e8312a'}">${clock(finSec,r)}</span>
+                </div>`;
+              }).join('')}
+            </div>
+          `:''}
+        </div>
+      </div>`;
+    }).join('')}
+
+    <div class="tl-finish">
+      <div class="tl-finish-title">🏁 전체 집합 — 상암 월드컵공원 평화광장</div>
+      <div class="tl-finish-time">~ 09:15</div>
+      <div class="tl-finish-sub">서울 마포구 중산로 32 · A·B·C조 모두 집합</div>
+    </div>
+  `;
+}
+
+function selectTlTeam(id){
+  window._tlSel = id;
+  renderTimeline_tab();
+}
+
+// delRunner — 단일 정의
+function delRunner(id) {
+  const r = runners.find(x => x.id === id);
+  if (!r) return;
+  if (!confirm(`🗑️ [${r.name}] 주자를 삭제하시겠습니까?`)) return;
+  if (db) {
+    db.ref('runners/' + id).remove();
+  } else {
+    runners = runners.filter(x => x.id !== id);
+    renderRunners(); renderTimeline(); renderLive();
+  }
+}
+
+// setActual 오버라이드 (라이브 입력 동기화)
+const _origSetActual = setActual;
+function setActual(rid, idx, val) {
+  const r = runners.find(x => x.id === rid);
+  if (!r) return;
+  if (!r.actuals) r.actuals = {};
+  if (val) r.actuals[idx] = val; else delete r.actuals[idx];
+  document.getElementById(`li-${rid}-${idx}`)?.classList.toggle('filled', !!val);
+  renderPersonView(); renderMatrixView(); renderTimeline(); renderRunners();
+  if (db) {
+    if (val) db.ref(`runners/${rid}/actuals/${idx}`).set(val);
+    else db.ref(`runners/${rid}/actuals/${idx}`).remove();
+  }
+}
+
+function showSyncBadge(msg, color) {
+  let el = document.getElementById('sync-badge');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'sync-badge';
+    el.style.cssText = 'position:fixed;bottom:16px;right:14px;z-index:9999;background:#fff;border:1.5px solid #e5e7eb;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.12);font-family:var(--sans);cursor:pointer';
+    el.onclick = () => { if(confirm('Firebase 설정 안내를 보시겠어요?')) alert(setupGuide()); };
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.color = color || '#374151';
+}
+
+function setupGuide() {
+  return [
+    '[ Firebase 무료 설정 방법 ]',
+    '',
+    '1. https://console.firebase.google.com 접속',
+    '2. 프로젝트 만들기 (무료 Spark 플랜)',
+    '3. 빌드 → Realtime Database → 데이터베이스 만들기',
+    '   (테스트 모드 선택)',
+    '4. 프로젝트 설정 → 앱 추가(웹) → firebaseConfig 복사',
+    '5. 이 HTML 파일의 firebaseConfig 부분에 붙여넣기',
+    '',
+    '설정 후 모든 기기에서 실시간 공유됩니다!'
+  ].join('\n');
+}
+
+// 페이지 로드 시 Firebase 초기화 + 기존 초기화
+initFirebase();
+renderSpotChips();renderTimeline();
+renderRunners();renderLive();
+initMap();
+setTimeout(()=>{ if(leafMap) leafMap.invalidateSize(); }, 300);
+setTimeout(()=>{ if(leafMap) leafMap.invalidateSize(); }, 800);
+</script>
+</body>
+</html>
